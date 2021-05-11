@@ -2,50 +2,10 @@
 */
 using System.Collections.Generic;
 using NUnit.Framework;
+using NSubstitute;
 
 namespace Oware.Tests
 {
-    public class MockHouse : IHouse
-    {
-        public void AddSeedInPot(Seed seed)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public int GetCount()
-        {
-            return 0;
-        }
-
-        public IReadOnlyList<Seed> GetSeeds()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public List<Seed> GetSeedsAndEmptyHouse()
-        {
-            List<Seed> seeds = new List<Seed>();
-            for (int i = 0; i < 4; i++) {
-                seeds.Add(new Seed());
-            }
-            return seeds;
-        }
-
-        public int GetXPos()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public int GetYPos()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void ResetHouse()
-        {
-            throw new System.NotImplementedException();
-        }
-    }
     public class BoardTests
     {
         [SetUp]
@@ -66,7 +26,12 @@ namespace Oware.Tests
             {
                 for (int j = 0; j < 6; j++)
                 {
-                    houses[i][j] = new MockHouse();
+                    IHouse h = Substitute.For<IHouse>();
+                    h.GetCount().Returns(0);
+                    List<Seed> seeds =
+                        new List<Seed>() { new Seed(), new Seed(), new Seed(), new Seed() };
+                    h.GetSeedsAndEmptyHouse().Returns(seeds);
+                    houses[i][j] = h;
                 }
             }
             Board b = new Board(p1, p2, houses);
@@ -75,6 +40,12 @@ namespace Oware.Tests
             // ASSERT:
             Assert.AreEqual(0, b.GetNumSeedsOnRow(0), "There should be no seeds on top row");
             Assert.AreEqual(0, b.GetNumSeedsOnRow(1), "There should be no seeds on bottom row");
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 6; j++) {
+                    houses[i][j].Received().GetSeedsAndEmptyHouse();
+                    houses[i][j].Received().GetCount();
+                }
+            }
         }
     }
 }
