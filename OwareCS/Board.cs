@@ -12,22 +12,14 @@ namespace Oware
         private Player player2;
         private bool gameStarted;
         private bool gameOverNoMovesPossible;
-        private House[][] board;
-        public Board(Player player1, Player player2) {
+        private IHouse[][] board;
+        public Board(Player player1, Player player2, IHouse[][] b) {
             // initialize the grid of houses
-            board = new House[2][];
-            board[0] = new House[6];
-            board[1] = new House[6];
+            this.board = b;
             this.player1 = player1;
             this.player2 = player2;
             // randomly chooses who plays in the first turn
             SetFirstTurn();
-            // initialises the houses on the board
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 6; j++) {
-                    board[i][j] = new House(i, j);
-                }
-            }
         }
 
         public void SetFirstTurn() {
@@ -57,13 +49,13 @@ namespace Oware
             } else {
                 // there are no seeds on the opponents row
                 int numberToDistribute = board[i][j].GetCount();
-                House targetHouse = board[i][j];
+                IHouse targetIHouse = board[i][j];
                 // moves the house to the target house
                 for (int index = 0; index < numberToDistribute; index++) {
-                    targetHouse = GetNextHouse(targetHouse);
+                    targetIHouse = GetNextIHouse(targetIHouse);
                 }
                 // if the target house is on the opponents side then return true
-                if (targetHouse.GetXPos() != i) {
+                if (targetIHouse.GetXPos() != i) {
                     return true;
                 }
                 // if the target house is on the players side you need to check to make
@@ -78,13 +70,13 @@ namespace Oware
             for (int j = 0; j < 6; j++) {
                 // stores the number of seeds in the house
                 int numberToDistribute = board[i][j].GetCount();
-                House targetHouse = board[i][j];
+                IHouse targetIHouse = board[i][j];
                 // keep moving to next house as there are seeds
                 for (int index = 0; index < numberToDistribute; index++) {
-                    targetHouse = GetNextHouse(targetHouse);
+                    targetIHouse = GetNextIHouse(targetIHouse);
                 }
                 // checks to see if the target house is on the opponents side
-                if (targetHouse.GetXPos() != i) {
+                if (targetIHouse.GetXPos() != i) {
                     // if it is, it means the move will give the opponend seeds
                     return true;
                 }
@@ -105,21 +97,21 @@ namespace Oware
                 // get list of seeds and empty house
                 IList<Seed> toSow = board[i][j].GetSeedsAndEmptyHouse();
 
-                House currentHouse = board[i][j]; // get the current house
+                IHouse currentIHouse = board[i][j]; // get the current house
                 for (int index = 0; index < toSow.Count; index++) {
                     // get the next one
-                    currentHouse = GetNextHouse(currentHouse);
+                    currentIHouse = GetNextIHouse(currentIHouse);
                     /* 12-seed rule: if sowing more than 12 seeds, we don't want
                        to replant in the starting house, so it is skipped
                     */
-                    if (currentHouse == board[i][j]) {
-                        currentHouse = GetNextHouse(currentHouse);
+                    if (currentIHouse == board[i][j]) {
+                        currentIHouse = GetNextIHouse(currentIHouse);
                     }
-                    currentHouse.AddSeedInPot(toSow[index]);
+                    currentIHouse.AddSeedInPot(toSow[index]);
                 }
 
                 // start capture from the last house
-                Capture(currentHouse.GetXPos(), currentHouse.GetYPos(), GetPlayerTurn());
+                Capture(currentIHouse.GetXPos(), currentIHouse.GetYPos(), GetPlayerTurn());
 
                 // switches the players' turns
                 player1.SetIsPlayersTurn(!player1.IsPlayersTurn());
@@ -136,8 +128,8 @@ namespace Oware
             return totalSeeds;
         }
 
-        // get the House at coordinate (i, j)
-        public House getHouseOnBoard(int i, int j) {
+        // get the IHouse at coordinate (i, j)
+        public IHouse getIHouseOnBoard(int i, int j) {
             return board[i][j];
         }
 
@@ -147,33 +139,33 @@ namespace Oware
         }
 
         private void Capture(int x, int y, int playerTurn) {
-            House currentHouse = board[x][y];
+            IHouse currentIHouse = board[x][y];
 
             if (playerTurn == 1) { // player 2 made the last move
-                CaptureHelper(player2, currentHouse, 1);
+                CaptureHelper(player2, currentIHouse, 1);
             } else { // player 1 made the last move
-                CaptureHelper(player1, currentHouse, 0);
+                CaptureHelper(player1, currentIHouse, 0);
             }
         }
 
         // Method to actually capture the seeds.  The house is only captured
         // if it contains 2 or 3 seeds.
-        private void CaptureHelper(Player lastPlayer, House lastHouse, int playerNumber) {
-            List<House> toCapture = new List<House>();
+        private void CaptureHelper(Player lastPlayer, IHouse lastIHouse, int playerNumber) {
+            List<IHouse> toCapture = new List<IHouse>();
             // checks to make sure the house is on the opponents side and it has 2 or 3 seeds
-            if (lastHouse.GetXPos() != playerNumber && (lastHouse.GetCount() == 2 || lastHouse.GetCount() == 3)) {
+            if (lastIHouse.GetXPos() != playerNumber && (lastIHouse.GetCount() == 2 || lastIHouse.GetCount() == 3)) {
                 // add house to list of houses
-                toCapture.Add(lastHouse);
+                toCapture.Add(lastIHouse);
 
                 // get previous house
-                House previousHouse = GetPreviousHouse(lastHouse);
+                IHouse previousIHouse = GetPreviousIHouse(lastIHouse);
                 for (int j = 0; j < 6; j++) {
                     // if still on the opponents row and has size 2 or 3
-                    if (previousHouse.GetXPos() == lastHouse.GetXPos() && (previousHouse.GetCount() == 2 || previousHouse.GetCount() == 3)) {
+                    if (previousIHouse.GetXPos() == lastIHouse.GetXPos() && (previousIHouse.GetCount() == 2 || previousIHouse.GetCount() == 3)) {
                         // add house to list to capture
-                        toCapture.Add(previousHouse);
+                        toCapture.Add(previousIHouse);
                         // moves to the next previous house;
-                        previousHouse = GetPreviousHouse(previousHouse);
+                        previousIHouse = GetPreviousIHouse(previousIHouse);
                     } else { // quit the loop
                         break;
                     }
@@ -185,24 +177,24 @@ namespace Oware
                 // keeps track of how many seeds captured
                 int capturedSeedTotal = 0;
                 // for each house that is captured, add the seed count to the counter
-                foreach (House capturedHouse in toCapture) {
-                    capturedSeedTotal += capturedHouse.GetCount();
+                foreach (IHouse capturedIHouse in toCapture) {
+                    capturedSeedTotal += capturedIHouse.GetCount();
                 }
                 // keep track of how many seeds on the row
                 int totalOnRow = 0;
                 // for each house on the row, add the seed count to the counter
                 // (to check if opponent still has seeds)
                 for (int j = 0; j < 6; j++) {
-                    totalOnRow += board[lastHouse.GetXPos()][j].GetCount();
+                    totalOnRow += board[lastIHouse.GetXPos()][j].GetCount();
                 }
 
                 // if the opponent now has no more seeds, then forfeit capture
                 if (capturedSeedTotal != totalOnRow) {
-                    foreach (House house in toCapture) {
+                    foreach (IHouse house in toCapture) {
                         // for each house get and empty the seeds
-                        List<Seed> toAddToScoreHouse = house.GetSeedsAndEmptyHouse();
+                        List<Seed> toAddToScoreIHouse = house.GetSeedsAndEmptyHouse();
                         // add each seed to the players score house
-                        foreach (Seed seed in toAddToScoreHouse) {
+                        foreach (Seed seed in toAddToScoreIHouse) {
                             seed.SetIsCaptured(true);
                             lastPlayer.AddSeedToScoreHouse(seed);
                         }
@@ -220,7 +212,7 @@ namespace Oware
 
         // Get next house in anticlockwise rotation by checking which row.
         // If on first row, we go backwards, if on second row we go forwards.
-        public House GetNextHouse(House house) {
+        public IHouse GetNextIHouse(IHouse house) {
             int currentX = house.GetXPos();
             int currentY = house.GetYPos();
 
@@ -248,7 +240,7 @@ namespace Oware
 
         // Get previous house in clockwise rotation by checking which row.
         // If on first row, we go forwards, if on second row we go backwards.
-        public House GetPreviousHouse(House house) {
+        public IHouse GetPreviousIHouse(IHouse house) {
             int currentX = house.GetXPos();
             int currentY = house.GetYPos();
 
@@ -317,7 +309,7 @@ namespace Oware
         }
 
         // get the number of seeds that are stored in a particular house
-        public int GetHouseCount(int i, int j) {
+        public int GetIHouseCount(int i, int j) {
             return board[i][j].GetCount();
         }
 
